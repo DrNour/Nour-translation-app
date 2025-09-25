@@ -1,7 +1,0 @@
-streamlit
-transformers==4.44.2
-torch>=2.0.0
-sentencepiece
-sacremoses
-evaluate
-sacrebleu
