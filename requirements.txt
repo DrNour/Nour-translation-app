@@ -1,0 +1,9 @@
+streamlit
+streamlit-authenticator
+sqlalchemy
+pandas
+sacrebleu
+unbabel-comet
+spacy
+sentence-transformers
+transformers

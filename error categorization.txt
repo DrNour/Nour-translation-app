@@ -1,0 +1,31 @@
+import spacy
+from difflib import SequenceMatcher
+import json
+
+nlp = spacy.load("en_core_web_sm")
+
+def categorize_errors(reference: str, hypothesis: str):
+    errors = {"omission": [], "addition": [], "mistranslation": [], "agreement": []}
+
+    ref_tokens = [t.text.lower() for t in nlp(reference) if t.is_alpha]
+    hyp_tokens = [t.text.lower() for t in nlp(hypothesis) if t.is_alpha]
+
+    for token in ref_tokens:
+        if token not in hyp_tokens:
+            errors["omission"].append(token)
+    for token in hyp_tokens:
+        if token not in ref_tokens:
+            errors["addition"].append(token)
+
+    for rt in ref_tokens:
+        ratios = [SequenceMatcher(None, rt, ht).ratio() for ht in hyp_tokens]
+        if ratios and max(ratios) < 0.5:
+            errors["mistranslation"].append(rt)
+
+    ref_doc, hyp_doc = nlp(reference), nlp(hypothesis)
+    for r, h in zip(ref_doc, hyp_doc):
+        if r.pos_ == "NOUN" and h.pos_ == "NOUN":
+            if (r.tag_ in ["NNS", "NNPS"]) != (h.tag_ in ["NNS", "NNPS"]):
+                errors["agreement"].append((r.text, h.text))
+
+    return json.dumps(errors)
