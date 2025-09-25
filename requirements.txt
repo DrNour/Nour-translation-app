@@ -1,4 +1,7 @@
 streamlit
 transformers==4.44.2
 torch>=2.0.0
-pip>=25.2
+sentencepiece
+sacremoses
+evaluate
+sacrebleu
