@@ -1,110 +1,64 @@
-# app.py
 import streamlit as st
 import pandas as pd
-import random
-import json
+import os
+from transformers import pipeline
+from nltk.translate.bleu_score import sentence_bleu
+from comet_ml import download_model, load_from_checkpoint
+from bert_score import score
 
-# Initialize session state
-if 'role' not in st.session_state:
-    st.session_state.role = None
-if 'exercises' not in st.session_state:
-    st.session_state.exercises = []
-if 'results' not in st.session_state:
-    st.session_state.results = []
+# Set up the app
+st.title("Interactive Translation App")
+st.sidebar.title("Navigation")
+app_mode = st.sidebar.selectbox("Choose the app mode", ["Instructor", "Student"])
 
-# ---------- Helper functions ----------
-def add_exercise(text, solution, exercise_type):
-    st.session_state.exercises.append({
-        "text": text,
-        "solution": solution,
-        "type": exercise_type
-    })
-
-def score_answer(student_answer, solution):
-    # Simple scoring: accuracy (exact match), fluency (length-based)
-    accuracy = 1.0 if student_answer.strip() == solution.strip() else 0.5
-    fluency = min(len(student_answer.split()) / len(solution.split()), 1.0)
-    return round((accuracy + fluency)/2, 2)
-
-def export_results():
-    df = pd.DataFrame(st.session_state.results)
-    df.to_csv("results.csv", index=False)
-    st.download_button("Download Results CSV", df.to_csv(index=False), "results.csv", "text/csv")
-
-def assign_badge(score):
-    if score > 0.9:
-        return "🏆 Gold"
-    elif score > 0.75:
-        return "🥈 Silver"
-    elif score > 0.5:
-        return "🥉 Bronze"
-    else:
-        return "💡 Try Again"
-
-# ---------- Role Selection ----------
-st.title("EduTrans Gamified Translation App")
-role = st.radio("Select your role:", ["Instructor", "Student"])
-st.session_state.role = role
-
-# ---------- Instructor Panel ----------
-if st.session_state.role == "Instructor":
-    st.header("Instructor Dashboard")
-    st.subheader("Add a New Exercise")
-    ex_type = st.selectbox("Exercise Type", ["Edit", "Translate"])
-    ex_text = st.text_area("Exercise Text")
-    ex_solution = st.text_area("Solution / Correct Version")
+# Define the instructor and student roles
+if app_mode == "Instructor":
+    st.header("Instructor Mode")
     
+    # Upload student submissions
+    st.subheader("Student Submissions")
+    uploaded_files = st.file_uploader("Choose student submissions", accept_multiple_files=True)
+    
+    # View student progress
+    st.subheader("Student Progress")
+    student_progress = pd.DataFrame(columns=["Student", "Accuracy", "Fluency"])
+    st.dataframe(student_progress)
+    
+    # Assign exercises
+    st.subheader("Assign Exercises")
+    exercise_text = st.text_area("Enter the exercise text")
+    if st.button("Assign Exercise"):
+        st.write(f"Exercise assigned: {exercise_text}")
+    
+    # Add new exercises
+    st.subheader("Add New Exercises")
+    new_exercise_text = st.text_area("Enter the new exercise text")
     if st.button("Add Exercise"):
-        if ex_text and ex_solution:
-            add_exercise(ex_text, ex_solution, ex_type)
-            st.success("Exercise added!")
-        else:
-            st.warning("Please fill in both text and solution.")
+        st.write(f"New exercise added: {new_exercise_text}")
 
-    if st.session_state.exercises:
-        st.subheader("Existing Exercises")
-        for i, ex in enumerate(st.session_state.exercises):
-            st.write(f"**{i+1}. [{ex['type']}]** {ex['text']} -> {ex['solution']}")
-
-    if st.session_state.results:
-        st.subheader("Student Results")
-        export_results()
-
-# ---------- Student Panel ----------
-elif st.session_state.role == "Student":
-    st.header("Student Dashboard")
+elif app_mode == "Student":
+    st.header("Student Mode")
     
-    if not st.session_state.exercises:
-        st.info("No exercises available. Ask your instructor to add exercises.")
-    else:
-        ex_idx = st.number_input("Choose exercise number:", min_value=1, max_value=len(st.session_state.exercises), step=1) - 1
-        exercise = st.session_state.exercises[ex_idx]
-        
-        st.subheader(f"Exercise {ex_idx+1} [{exercise['type']}]")
-        st.write(exercise['text'])
-        
-        student_answer = st.text_area("Your Answer")
-        
-        if st.button("Submit Answer"):
-            score = score_answer(student_answer, exercise['solution'])
-            badge = assign_badge(score)
-            
-            st.success(f"Score: {score} | Badge: {badge}")
-            
-            # Save result
-            st.session_state.results.append({
-                "exercise": exercise['text'],
-                "student_answer": student_answer,
-                "score": score,
-                "badge": badge
-            })
-            
-            st.balloons()  # Fun gamification
-
-        if st.session_state.results:
-            st.subheader("Your Previous Results")
-            for res in st.session_state.results:
-                st.write(f"Exercise: {res['exercise']}")
-                st.write(f"Answer: {res['student_answer']}")
-                st.write(f"Score: {res['score']} | Badge: {res['badge']}")
-                st.write("---")
+    # Translate text interactively
+    st.subheader("Translate Text")
+    text_to_translate = st.text_area("Enter the text to translate")
+    translation_model = pipeline("translation", model="Helsinki-NLP/opus-mt-en-de")
+    translated_text = translation_model(text_to_translate)[0]["translation_text"]
+    st.write(f"Translated text: {translated_text}")
+    
+    # Assess translation quality
+    st.subheader("Assess Translation Quality")
+    reference_text = st.text_area("Enter the reference translation")
+    bleu_score = sentence_bleu([reference_text.split()], translated_text.split())
+    comet_model = load_from_checkpoint("wmt-large-da-estimator")
+    comet_score = comet_model.predict(src_text=text_to_translate, mt_text=translated_text, ref_text=reference_text)
+    bert_score, _, _ = score(translated_text, reference_text, lang="en")
+    st.write(f"BLEU score: {bleu_score:.2f}")
+    st.write(f"COMET score: {comet_score:.2f}")
+    st.write(f"BERT score: {bert_score:.2f}")
+    
+    # Submit translation
+    st.subheader("Submit Translation")
+    submitted_translation = st.text_area("Enter your translation")
+    if st.button("Submit Translation"):
+        st.write(f"Translation submitted: {submitted_translation}")
