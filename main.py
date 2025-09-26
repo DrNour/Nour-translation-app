@@ -49,7 +49,8 @@ def load_bertscore():
 
 @st.cache_resource
 def load_comet():
-    from comet import download_model, load_from_checkpoint
+    from comet.models import download_model, load_from_checkpoint  
+
     model_path = download_model("Unbabel/wmt22-comet-da")
     return load_from_checkpoint(model_path)
 
@@ -162,3 +163,4 @@ elif role == "Student":
             st.write(f"**BERTScore:** {scores[1]:.2f}")
             st.write(f"**COMET:** {scores[2]:.2f}")
             st.write(f"**Errors:** {scores[3]}")
+
