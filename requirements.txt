@@ -4,5 +4,6 @@ pandas>=2.1.0
 sacrebleu>=2.4.1
 bert-score>=0.3.13
 sentence-transformers>=2.7.0
-unbabel-comet>=1.0.0
+unbabel-comet
 spacy>=3.7.2
+
