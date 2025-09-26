@@ -1,4 +1,4 @@
-# Core Streamlit and UI dependencies (pin to versions Streamlit expects)
+# Core Streamlit and UI dependencies (pinned versions to avoid install conflicts)
 streamlit==1.25.0
 rich==14.1.0
 markdown-it-py==4.0.0
@@ -24,7 +24,7 @@ unbabel-comet>=2.2.7
 # NLP
 spacy>=3.8.7
 
-# Transformers & PyTorch (for BERTScore and COMET)
+# Transformers & PyTorch (required for COMET and BERTScore)
 torch>=2.1.0
 transformers>=4.30.0
 
