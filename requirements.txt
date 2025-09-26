@@ -1,12 +1,37 @@
+# Streamlit and UI
 streamlit==1.25.0
+rich==14.1.0
+markdown-it-py==4.0.0
+mdurl==0.1.2
+pygments==2.19.2
+altair>=5.5.0
+blinker>=1.4
+cachetools>=5.0.0
+click>=8.0
+importlib-metadata>=6.0
+
+# Data handling
+pandas>=2.3.2
+numpy>=1.26.4
 sqlalchemy>=2.0.20
-pandas>=2.1.0
-sacrebleu>=2.4.1
+
+# Translation metrics
+sacrebleu>=2.5.1
 bert-score>=0.3.13
 sentence-transformers>=2.7.0
-spacy>=3.7.2
 unbabel-comet>=2.2.7
+
+# NLP
+spacy>=3.8.7
+
+# For building wheels
+pip>=25.2
+setuptools>=80.9.0
+wheel>=0.45.1
+
+# Optional: Image handling
+pillow>=9.5.0
+
+# Transformers & torch for BERTScore and COMET
 torch>=2.1.0
 transformers>=4.30.0
-
-
