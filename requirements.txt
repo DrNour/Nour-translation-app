@@ -1,4 +1,4 @@
-# Streamlit and UI
+# Core Streamlit and UI dependencies (pin to versions Streamlit expects)
 streamlit==1.25.0
 rich==14.1.0
 markdown-it-py==4.0.0
@@ -24,14 +24,14 @@ unbabel-comet>=2.2.7
 # NLP
 spacy>=3.8.7
 
+# Transformers & PyTorch (for BERTScore and COMET)
+torch>=2.1.0
+transformers>=4.30.0
+
 # For building wheels
 pip>=25.2
 setuptools>=80.9.0
 wheel>=0.45.1
 
-# Optional: Image handling
+# Optional: image handling
 pillow>=9.5.0
-
-# Transformers & torch for BERTScore and COMET
-torch>=2.1.0
-transformers>=4.30.0
