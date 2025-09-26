@@ -38,35 +38,35 @@ submissions = Table(
 
 meta.create_all(engine)
 
-
 # ========================
-# LAZY LOAD MODELS
+# CACHED MODELS
 # ========================
 @st.cache_resource
 def load_bertscore():
-    from bert_score import score
-    return score
+    from bert_score import score as bert_scorer
+    return bert_scorer
 
 @st.cache_resource
 def load_comet():
-    from comet.models import download_model, load_from_checkpoint  
-
+    from unbabel_comet import download_model, load_from_checkpoint
     model_path = download_model("Unbabel/wmt22-comet-da")
     return load_from_checkpoint(model_path)
-
 
 # ========================
 # HELPER FUNCTIONS
 # ========================
 def evaluate_translation(src, hyp, ref):
-    """Compute BLEU, BERTScore, COMET, simple error categorization."""
-    # BLEU
+    """Compute BLEU, optionally BERTScore/COMET, with crash protection."""
     bleu = BLEU()
     bleu_score = bleu.corpus_score([hyp], [[ref]]).score
 
+    # Skip if reference empty
+    if not ref.strip():
+        return bleu_score, 0, 0, "Empty reference"
+
     # BERTScore
     bert_scorer = load_bertscore()
-    P, R, F1 = bert_scorer([hyp], [ref], lang="en")
+    P, R, F1 = bert_scorer([hyp], [ref], model_type="roberta-base", lang="en")
     bert_score = F1.mean().item()
 
     # COMET
@@ -74,23 +74,24 @@ def evaluate_translation(src, hyp, ref):
     data = [{"src": src, "mt": hyp, "ref": ref}]
     comet_score = comet_model.predict(data, batch_size=8, gpus=0)["score"]
 
-    # Error categorization (toy demo)
+    # Simple error categorization
     errors = []
     if len(hyp.split()) < 0.7 * len(ref.split()):
         errors.append("Omission")
     if any(w not in ref for w in hyp.split()):
         errors.append("Lexical choice issue")
-    if hyp[0].islower():
+    if hyp and hyp[0].islower():
         errors.append("Grammar: capitalization")
 
     return bleu_score, bert_score, comet_score, "; ".join(errors)
 
-
 def add_exercise(title, src, ref):
+    if not ref.strip():
+        st.warning("Reference translation cannot be empty!")
+        return
     ins = exercises.insert().values(title=title, source_text=src, reference_translation=ref)
     with engine.begin() as conn:
         conn.execute(ins)
-
 
 def add_submission(student_name, ex_id, translation, scores):
     bleu, bert, comet, errors = scores
@@ -106,9 +107,8 @@ def add_submission(student_name, ex_id, translation, scores):
     with engine.begin() as conn:
         conn.execute(ins)
 
-
 # ========================
-# UI
+# STREAMLIT UI
 # ========================
 st.title("🌍 Interactive Translation Training Platform")
 
@@ -136,12 +136,10 @@ if role == "Instructor":
             st.dataframe(df)
             st.download_button("Download Submissions (CSV)", df.to_csv(index=False), "submissions.csv")
 
-
 elif role == "Student":
     st.header("🧑‍🎓 Student Workspace")
     student_name = st.text_input("Enter your name")
 
-    # List available exercises
     ex_df = pd.read_sql(exercises.select(), engine)
     if ex_df.empty:
         st.warning("No exercises available yet. Wait for instructor to add.")
@@ -163,4 +161,3 @@ elif role == "Student":
             st.write(f"**BERTScore:** {scores[1]:.2f}")
             st.write(f"**COMET:** {scores[2]:.2f}")
             st.write(f"**Errors:** {scores[3]}")
-
