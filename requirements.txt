@@ -3,7 +3,7 @@ streamlit==1.25.0
 rich==13.7.1
 markdown-it-py==3.0.0
 mdurl==0.1.2
-pygments==2.19.2
+pygments==2.19.1
 
 # NLP / MT evaluation
 sacrebleu>=2.4.1
@@ -15,8 +15,3 @@ spacy>=3.7.2
 # Database / utils
 sqlalchemy>=2.0.20
 pandas>=2.1.0
-
-# Pip & packaging
-pip==25.2
-setuptools>=70.0
-wheel
