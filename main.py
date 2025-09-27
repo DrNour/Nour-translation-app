@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import sacrebleu
 import bert_score
-from unbabel_comet import download_model, load_from_checkpoint
+from comet import download_model, load_from_checkpoint
 
 
 # ---------------------------
@@ -68,3 +68,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
