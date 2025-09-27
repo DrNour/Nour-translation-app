@@ -1,35 +1,5 @@
-# Core app
-streamlit==1.25.0
-
-# COMET for translation evaluation
-unbabel-comet>=2.2.7
-
-# NLP & embeddings
-torch>=2.1.0
-transformers>=4.30.0
-sentence-transformers>=2.7.0
-spacy>=3.8.7
-
-# Evaluation metrics
-sacrebleu>=2.5.1
-bert-score>=0.3.13
-
-# Data handling
-pandas>=2.3.2
-numpy>=1.26.4
-
-# Visualization
-altair>=5.5.0
-
-# Utilities
-cachetools>=5.0.0
-click>=8.0
-importlib-metadata>=6.0
-pyyaml>=6.0
-python-dateutil>=2.7.3
-pillow>=9.5.0
-
-# Development & packaging
-pip>=25.2
-setuptools>=80.9.0
-wheel>=0.45.1
+streamlit
+torch
+transformers
+sacrebleu
+bert-score
